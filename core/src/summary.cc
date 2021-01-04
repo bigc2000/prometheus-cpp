@@ -1,5 +1,8 @@
 #include "prometheus/summary.h"
 
+#include <iomanip>
+#include <sstream>
+
 namespace prometheus {
 
 Summary::Summary(const Quantiles& quantiles,
@@ -24,7 +27,14 @@ ClientMetric Summary::Collect() const {
 
   for (const auto& quantile : quantiles_) {
     auto metricQuantile = ClientMetric::Quantile{};
-    metricQuantile.quantile = quantile.quantile;
+    if (quantile.name.empty()) {
+      std::stringstream stream;
+      stream << std::fixed << quantile.quantile;
+      metricQuantile.quantile = stream.str();
+    } else {
+      metricQuantile.quantile = quantile.name;
+    }
+
     metricQuantile.value = quantile_values_.get(quantile.quantile);
     metric.summary.quantile.push_back(std::move(metricQuantile));
   }
